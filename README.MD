@@ -36,7 +36,7 @@
   
 5. Create a Bot token and paste in `.env`: 
    + Create a `.env` file. You can look at the `.env.example` to see how it should be, or copy this and paste this code into the `.env`
-   ```
+   ```s
    TELEGRAM_TOKEN="Paste your token"
    ```
    + Open Telegram and enter in the search field: `@BotFather`.
