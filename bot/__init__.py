@@ -16,11 +16,18 @@ dp = Dispatcher()
 
 
 async def command_error(message: Message):
+    """This function is triggered when the user sends a command that is not recognized
+    by the bot. It sends a response to the user indicating that the command is invalid.
+
+    Args:
+        message (Message): The incoming message containing the unrecognized command.
+    """
     await message.answer(f"Команди {message.text} немає!!!")
 
 
 async def start() -> None:
-    """launches the bot functionality"""
+    """Launches the bot functionality
+    """
     bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp.include_routers(main_router)
     await dp.start_polling(bot)
