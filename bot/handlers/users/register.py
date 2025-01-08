@@ -71,8 +71,8 @@ async def register_phone(message: Message, state: FSMContext):
             session.rollback()
             await message.answer(f"Помилка при вставці в базу даних: {e}")
         finally:
-            session.close()
             await state.clear()
+            session.close()
     else:
         await message.answer(
             "Номер телефону введено некоректно. Будь ласка, введіть номер у форматі +380XXXXXXXXX."
