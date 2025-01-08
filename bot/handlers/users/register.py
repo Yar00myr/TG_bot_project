@@ -12,12 +12,25 @@ router = Router(name=__name__)
 
 
 def hash_phone_number(phone_number: str) -> str:
-    """Hash the phone number using SHA-256."""
+    """_summary_
+
+    Args:
+        phone_number (str): The phone number that needs to be hashed.
+
+    Returns:
+        str: The resulting SHA-256 hash of the phone number, represented as a hexadecimal string.
+    """
     return hashlib.sha256(phone_number.encode("utf-8")).hexdigest()
 
 
 @router.message(RegisterState.username)
 async def register_name(message: Message, state: FSMContext):
+    """_summary_
+
+    Args:
+        message (Message): The incoming message containing the user's username.
+        state (FSMContext): The finite state machine context for the current user session.
+    """
     await message.answer(
         "Дякую! Тепер надішліть свій номер телефону у форматі +380XXXXXXXXX."
     )
@@ -29,33 +42,42 @@ async def register_name(message: Message, state: FSMContext):
 async def register_phone(message: Message, state: FSMContext):
     """Handles the user's phone number during the registration process.
 
-    Validates the phone number format and checks if it is already registered in the database.
-    If valid and not already registered, hashes the phone number, saves the user to the database,
-    and completes the registration process.
+    Validates the phone number format and checks if it or the Telegram ID is already registered
+    in the database. If valid and not already registered, hashes the phone number, saves the user
+    to the database, and completes the registration process.
 
     Args:
         message (Message): The incoming message containing the user's phone number.
         state (FSMContext): The finite state machine context for the current user session.
     """
     phone_number = message.text
+    telegram_id = message.from_user.id
+
     if re.match(r"^\+?380\d{9}$", phone_number):
         hashed_phone_number = hash_phone_number(phone_number)
         session = Session()
         try:
-            # Check if the hashed phone number already exists in the database
+
             existing_user = (
-                session.query(Users).filter_by(phone_number=hashed_phone_number).first()
+                session.query(Users)
+                .filter(
+                    (Users.phone_number == hashed_phone_number)
+                    | (Users.telegram_id == telegram_id)
+                )
+                .first()
             )
+
             if existing_user:
-                await message.answer("Цей номер телефону вже зареєстровано.")
+                if existing_user.telegram_id == telegram_id:
+                    await message.answer(
+                        "Цей обліковий запис Telegram вже зареєстровано."
+                    )
+                elif existing_user.phone_number == hashed_phone_number:
+                    await message.answer("Цей номер телефону вже зареєстровано.")
             else:
                 reg_data = await state.get_data()
                 reg_name = reg_data.get("username")
 
-                # Get the Telegram user ID
-                telegram_id = message.from_user.id
-
-                # Add the user to the database with the hashed phone number
                 new_user = Users(
                     telegram_id=telegram_id,
                     username=reg_name,
