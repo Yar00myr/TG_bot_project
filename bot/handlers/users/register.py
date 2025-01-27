@@ -4,15 +4,15 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReactionTypeEmoji
 from sqlalchemy.exc import SQLAlchemyError
-from db import Users, Session
+from sqlalchemy import select
+from db import Users, get_session
 from ...state.register import RegisterState
-
 
 router = Router(name=__name__)
 
 
 def hash_phone_number(phone_number: str) -> str:
-    """_summary_
+    """Hashes a phone number using SHA-256.
 
     Args:
         phone_number (str): The phone number that needs to be hashed.
@@ -25,7 +25,7 @@ def hash_phone_number(phone_number: str) -> str:
 
 @router.message(RegisterState.username)
 async def register_name(message: Message, state: FSMContext):
-    """_summary_
+    """Handles the user's username during the registration process.
 
     Args:
         message (Message): The incoming message containing the user's username.
@@ -55,46 +55,41 @@ async def register_phone(message: Message, state: FSMContext):
 
     if re.match(r"^\+?380\d{9}$", phone_number):
         hashed_phone_number = hash_phone_number(phone_number)
-        session = Session()
         try:
-
-            existing_user = (
-                session.query(Users)
-                .filter(
+            with get_session() as session:
+                stmt = select(Users).where(
                     (Users.phone_number == hashed_phone_number)
                     | (Users.telegram_id == telegram_id)
                 )
-                .first()
-            )
 
-            if existing_user:
-                if existing_user.telegram_id == telegram_id:
-                    await message.answer(
-                        "Цей обліковий запис Telegram вже зареєстровано."
+                existing_user = session.execute(stmt).scalar_one_or_none()
+
+                if isinstance(existing_user, Users):
+                    if existing_user.telegram_id == telegram_id:
+                        await message.answer(
+                            "Цей обліковий запис Telegram вже зареєстровано."
+                        )
+                    elif existing_user.phone_number == hashed_phone_number:
+                        await message.answer("Цей номер телефону вже зареєстровано.")
+                else:
+                    reg_data = await state.get_data()
+                    reg_name = reg_data.get("username")
+
+                    new_user = Users(
+                        telegram_id=telegram_id,
+                        username=reg_name,
+                        phone_number=hashed_phone_number,
                     )
-                elif existing_user.phone_number == hashed_phone_number:
-                    await message.answer("Цей номер телефону вже зареєстровано.")
-            else:
-                reg_data = await state.get_data()
-                reg_name = reg_data.get("username")
-
-                new_user = Users(
-                    telegram_id=telegram_id,
-                    username=reg_name,
-                    phone_number=hashed_phone_number,
-                )
-                session.add(new_user)
-                session.commit()
-                await message.answer(
-                    f"Реєстрація успішна!\nІм'я: {reg_name}\nНомер телефону: {phone_number}"
-                )
-                await message.react([ReactionTypeEmoji(emoji="👍")])
+                    session.add(new_user)
+                    session.commit()
+                    await message.answer(
+                        f"Реєстрація успішна!\nІм'я: {reg_name}\nНомер телефону: {phone_number}"
+                    )
+                    await message.react([ReactionTypeEmoji(emoji="👍")])
         except SQLAlchemyError as e:
-            session.rollback()
             await message.answer(f"Помилка при вставці в базу даних: {e}")
         finally:
             await state.clear()
-            session.close()
     else:
         await message.answer(
             "Номер телефону введено некоректно. Будь ласка, введіть номер у форматі +380XXXXXXXXX."

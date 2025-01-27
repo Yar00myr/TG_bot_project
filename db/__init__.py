@@ -1,9 +1,22 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from contextlib import contextmanager
+from .models import Config, Habits, Reminders, Users
 
 
-engine = create_engine("sqlite:///my.sql", echo=True)
-Session = sessionmaker(engine)
+def up():
+    Config.BASE.metadata.create_all(Config.ENGINE)
 
 
-from .models import Base, Users, Habits, Reminders
+def down():
+    Config.BASE.metadata.drop_all(Config.ENGINE)
+
+
+def migrate():
+    down()
+    up()
+
+
+
+@contextmanager
+def get_session():
+    with Config.SESSION.begin() as session:
+        yield session

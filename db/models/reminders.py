@@ -1,8 +1,10 @@
 import datetime
 from sqlalchemy import ForeignKey, DateTime
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from . import Base
-# from .habits import Habits
+from .config import Config
+
+Base = Config.BASE
+
 
 class Reminders(Base):
     __tablename__ = "reminders"
@@ -13,4 +15,3 @@ class Reminders(Base):
     reminder_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     habit: Mapped["Habits"] = relationship("Habits", back_populates="reminders")
-    

@@ -1,9 +1,9 @@
 from typing import List
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from ..models import Base
-from .habits import Habits
+from .config import Config
 
+Base = Config.BASE
 
 class Users(Base):
     
