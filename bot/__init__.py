@@ -5,7 +5,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.types import Message
 from dotenv import load_dotenv
 
-from .handlers.users import router as main_router
+from .handlers import router as main_router
 
 load_dotenv()
 TOKEN = getenv("TELEGRAM_TOKEN")
