@@ -4,7 +4,7 @@ from aiogram.filters import Command
 from sqlalchemy.exc import SQLAlchemyError
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy import select
-from db import Habits, get_session
+from db import AsyncDB, Habits
 from ...state.tracking_habit import HabitState
 from ...keyboards._tracking_habit_keyboard import get_tracking_habit_keyboard
 
@@ -41,18 +41,18 @@ async def process_habit_frequency(message: types.Message, state: FSMContext):
     habit_name = data.get("habit_name")
     user_id = message.from_user.id
 
-    with get_session() as session:
+    async with AsyncDB.get_session() as session:
         try:
             new_habit = Habits(
                 user_id=user_id, habit=habit_name, frequency=habit_frequency
             )
             session.add(new_habit)
-            session.commit()
+            await session.commit()
             await message.answer(
                 f"Звичка '{habit_name}' успішно збережена з частотою {habit_frequency}."
             )
         except SQLAlchemyError as e:
-            session.rollback()
+            await session.rollback()
             await message.answer(f"Помилка при вставці в базу даних: {e}")
 
     await state.clear()
@@ -62,10 +62,11 @@ async def process_habit_frequency(message: types.Message, state: FSMContext):
 async def process_view_all_habits(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
 
-    with get_session() as session:
-        habits = session.execute(
+    async with AsyncDB.get_session() as session:
+        habits = await session.execute(
             select(Habits.id, Habits.habit).where(Habits.user_id == user_id)
-        ).all()
+        )
+        habits = habits.all()
 
     if habits:
         keyboard = InlineKeyboardMarkup(
@@ -93,14 +94,16 @@ async def process_view_all_habits(callback_query: types.CallbackQuery):
 @router.callback_query(lambda c: c.data.startswith("delete_habit"))
 async def process_delete_habit(callback_query: types.CallbackQuery):
     habit_id = int(callback_query.data.split("_")[2])
-    with get_session() as session:
+    async with AsyncDB.get_session() as session:
         try:
-            habit_to_delete = session.execute(
+            habit_to_delete = await session.execute(
                 select(Habits).where(Habits.id == habit_id)
-            ).scalar_one_or_none()
+            )
+            habit_to_delete = habit_to_delete.scalar_one_or_none()
+
             if habit_to_delete:
-                session.delete(habit_to_delete)
-                session.commit()
+                await session.delete(habit_to_delete)
+                await session.commit()
                 await callback_query.message.answer(
                     f"Звичка '{habit_to_delete.habit}' успішно видалена."
                 )
@@ -109,7 +112,7 @@ async def process_delete_habit(callback_query: types.CallbackQuery):
                     "Не вдалося знайти звичку для видалення."
                 )
         except SQLAlchemyError as e:
-            session.rollback()
+            await session.rollback()
             await callback_query.message.answer(f"Помилка при видаленні звички: {e}")
 
 
@@ -132,21 +135,21 @@ async def process_habit_update_frequency(message: types.Message, state: FSMConte
     data = await state.get_data()
     habit_id = data.get("habit_id")
 
-    with get_session() as session:
+    async with AsyncDB.get_session() as session:
         try:
-            habit_to_update = session.execute(
-                select(Habits).where(Habits.id == habit_id)
-            ).scalar_one_or_none()
+            result = await session.execute(select(Habits).where(Habits.id == habit_id))
+            habit_to_update = result.scalars().first()
+
             if habit_to_update:
                 habit_to_update.frequency = new_frequency
-                session.commit()
+                await session.commit()
                 await message.answer(
                     f"Частота звички '{habit_to_update.habit}' успішно оновлена до {new_frequency}."
                 )
             else:
                 await message.answer("Не вдалося знайти звичку для оновлення.")
         except SQLAlchemyError as e:
-            session.rollback()
+            await session.rollback()
             await message.answer(f"Помилка при оновленні звички: {e}")
 
     await state.clear()

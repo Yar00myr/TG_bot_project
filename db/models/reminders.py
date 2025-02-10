@@ -1,9 +1,7 @@
-import datetime
+from datetime import datetime
 from sqlalchemy import ForeignKey, DateTime
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from .config import Config
-
-Base = Config.BASE
+from .. import Base
 
 
 class Reminders(Base):

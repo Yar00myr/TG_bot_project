@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReactionTypeEmoji
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
-from db import Users, get_session
+from db import AsyncDB, Users
 from ...state.register import RegisterState
 
 router = Router(name=__name__)
@@ -42,9 +42,9 @@ async def register_name(message: Message, state: FSMContext):
 async def register_phone(message: Message, state: FSMContext):
     """Handles the user's phone number during the registration process.
 
-    Validates the phone number format and checks if it or the Telegram ID is already registered
-    in the database. If valid and not already registered, hashes the phone number, saves the user
-    to the database, and completes the registration process.
+    Validates the phone number format and checks if the phone number or Telegram ID are already registered
+    in the database. If valid and not already registered, hashes the phone number, saves the user to the database,
+    and completes the registration process.
 
     Args:
         message (Message): The incoming message containing the user's phone number.
@@ -56,15 +56,16 @@ async def register_phone(message: Message, state: FSMContext):
     if re.match(r"^\+?380\d{9}$", phone_number):
         hashed_phone_number = hash_phone_number(phone_number)
         try:
-            with get_session() as session:
+            async with AsyncDB.get_session() as session:
                 stmt = select(Users).where(
                     (Users.phone_number == hashed_phone_number)
                     | (Users.telegram_id == telegram_id)
                 )
 
-                existing_user = session.execute(stmt).scalar_one_or_none()
+                result = await session.execute(stmt)
+                existing_user = result.scalar_one_or_none()
 
-                if isinstance(existing_user, Users):
+                if existing_user:
                     if existing_user.telegram_id == telegram_id:
                         await message.answer(
                             "Цей обліковий запис Telegram вже зареєстровано."
@@ -81,7 +82,8 @@ async def register_phone(message: Message, state: FSMContext):
                         phone_number=hashed_phone_number,
                     )
                     session.add(new_user)
-                    session.commit()
+                    await session.commit()
+
                     await message.answer(
                         f"Реєстрація успішна!\nІм'я: {reg_name}\nНомер телефону: {phone_number}"
                     )
