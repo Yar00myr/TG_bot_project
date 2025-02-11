@@ -5,9 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy import select
 from db import AsyncDB, Habits
-from ...state.tracking_habit import HabitState
-from ...keyboards._tracking_habit_keyboard import get_tracking_habit_keyboard
-
+from ...state import HabitState
+from ...keyboards import get_tracking_habit_keyboard
 router = Router(name=__name__)
 
 

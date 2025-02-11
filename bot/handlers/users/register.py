@@ -6,7 +6,7 @@ from aiogram.types import Message, ReactionTypeEmoji
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from db import AsyncDB, Users
-from ...state.register import RegisterState
+from ...state import RegisterState
 
 router = Router(name=__name__)
 
