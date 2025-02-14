@@ -2,8 +2,8 @@ from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from ...state.register import RegisterState
-from ...keyboards.user_choice import users_choice, UserCBData
+from ...state import RegisterState
+from ...keyboards import users_choice, UserCBData
 
 
 router = Router(name=__name__)
