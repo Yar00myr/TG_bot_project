@@ -1,8 +1,7 @@
 import logging
 import asyncio
 import sys
-from bot import start
-from db import AsyncDB
+from bot import start, AsyncDB
 
 
 async def main():

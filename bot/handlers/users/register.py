@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReactionTypeEmoji
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
-from db import AsyncDB, Users
+from ...db import AsyncDB, Users
 from ...state import RegisterState
 
 router = Router(name=__name__)

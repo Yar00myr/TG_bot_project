@@ -4,7 +4,7 @@ from aiogram.filters import Command
 from sqlalchemy.exc import SQLAlchemyError
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy import select
-from db import AsyncDB, Habits
+from ...db import AsyncDB, Habits
 from ...state import HabitState
 from ...keyboards import get_tracking_habit_keyboard
 

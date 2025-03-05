@@ -6,6 +6,7 @@ from aiogram.types import Message
 from dotenv import load_dotenv
 
 from .handlers import router as main_router
+from .db import AsyncDB
 
 load_dotenv()
 TOKEN = getenv("TELEGRAM_TOKEN")
