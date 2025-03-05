@@ -51,4 +51,7 @@
      For a description of the Bot API, see this page: https://core.telegram.org/bots/api
     + 
 
+---
+# Translation to [Ukrainian](README.uk.md)
+
 # The documentation is under development, so it may not be clear or work correctly :warning: :warning: :warning:
