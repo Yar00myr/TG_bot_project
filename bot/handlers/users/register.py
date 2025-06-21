@@ -20,7 +20,8 @@ def hash_phone_number(phone_number: str) -> str:
     Returns:
         str: The resulting SHA-256 hash of the phone number, represented as a hexadecimal string.
     """
-    return hashlib.sha256(phone_number.encode("utf-8")).hexdigest()
+    return hashlib.sha256(phone_number.encode("utf-8")).hexdigest() # reduce the number of bytes store
+
 
 
 @router.message(RegisterState.username)
