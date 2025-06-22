@@ -5,8 +5,8 @@ from aiogram.types import InlineKeyboardMarkup
 from bot.keyboards import get_tracking_habit_keyboard, users_choice, UserCBData
 from .fixures import user
 
-
-def test_get_tracking_habit_keyboard(user):
+@pytest.mark.asyncio
+async def test_get_tracking_habit_keyboard(user):
     keyboard = get_tracking_habit_keyboard(user)
 
     assert isinstance(keyboard, InlineKeyboardMarkup)
@@ -22,6 +22,8 @@ def test_get_tracking_habit_keyboard(user):
     second_button = keyboard.inline_keyboard[0][1]
     assert second_button.text == "Додати нову звичку"
     assert second_button.callback_data == "add_new_habit"
+    
+    
 
 
 def test_users_choice():
