@@ -4,34 +4,43 @@ from unittest.mock import AsyncMock
 
 from aiogram.types import Message, User, Chat
 
+from bot.db import Users
+
 
 @pytest.fixture
-def user_id():
-    """Fixture for providing a mock user_id.
-
-    This fixture is used to simulate a user ID that will be passed
-    into tests for generating keyboards.
-
-    Returns:
-        int: A mock user ID (123).
-    """
-    return 123
+def user():
+    return Users(
+        id=1, telegram_id=123, username="test-username", phone_number="+380991234567"
+    )
 
 
 @pytest.fixture
 def mock_state():
-    state = AsyncMock()
-    state.get_data.return_value = {"username": "TestUser"}
-    return state
+    mock = AsyncMock()
+    mock.update_data = AsyncMock()
+    mock.set_state = AsyncMock()
+    mock.get_data = AsyncMock(return_value={"username": "TestUser"})
+    mock.clear = AsyncMock()
+    return mock
 
 
 @pytest.fixture
 def mock_message():
-
     return Message(
         message_id=1,
         date=datetime.now(),
-        chat=Chat(id=123, type="private"),
-        from_user=User(id=123, is_bot=False, first_name="Test"),
+        chat=Chat(id=12345, type="private"),
+        from_user=User(id=123, is_bot=False, first_name="TestUser"),
         text="+380991234567",
+    )
+
+
+@pytest.fixture
+def mock_username_message():
+    return Message(
+        message_id=2,
+        date=datetime.now(),
+        chat=Chat(id=12345, type="private"),
+        from_user=User(id=123, is_bot=False, first_name="TestUser"),
+        text="MyTestUsername",
     )
